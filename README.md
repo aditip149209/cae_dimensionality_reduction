@@ -16,7 +16,7 @@ The core of the project is to take a high-dimensional input (an RGB image) and u
 
 ---
 
-## ## Core Concepts 💡
+##  Core Concepts 💡
 
 -   **Convolutional Autoencoder (CAE):** An unsupervised neural network that uses an encoder-decoder structure to learn a compressed representation (latent space) of its input.
 -   **Encoder:** The part of the network that compresses the input image down to a low-dimensional latent vector. This vector is the result of the dimensionality reduction.
@@ -27,7 +27,7 @@ The core of the project is to take a high-dimensional input (an RGB image) and u
 
 ---
 
-## ## Features
+##  Features
 
 -   Load a pre-trained Keras model from the Hugging Face Hub.
 -   Isolate the **encoder** to perform dimensionality reduction.
@@ -36,7 +36,7 @@ The core of the project is to take a high-dimensional input (an RGB image) and u
 
 ---
 
-## ## Installation
+##  Installation
 
 1.  **Clone the repository:**
     ```bash
