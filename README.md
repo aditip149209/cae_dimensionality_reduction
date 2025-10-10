@@ -60,7 +60,8 @@ The core of the project is to take a high-dimensional input (an RGB image) and u
     ```
 
 4. **Run the model**
-    ```python3 model.py
+    ```bash
+    python3 model.py
     ```
 
 ---
