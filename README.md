@@ -59,4 +59,8 @@ The core of the project is to take a high-dimensional input (an RGB image) and u
     pip install -r requirements.txt
     ```
 
+4. **Run the model**
+    ```python3 model.py
+    ```
+
 ---
