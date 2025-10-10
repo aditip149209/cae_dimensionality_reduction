@@ -1,0 +1,6 @@
+tensorflow
+streamlit 
+matplotlib
+numpy
+scikit-image
+huggingface_hub
