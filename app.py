@@ -23,13 +23,13 @@ def load_html(file_name):
 local_css("style.css")
 
 # Page config
-st.set_page_config(page_title="Convolutional Autoencoder", layout="wide")
+st.set_page_config(page_title="SOFTWARE ENGINEERING (IT303) COURSE PROJECT TITLE: RGB DIMENSIONALITY REDUCTION USING CONVOLUTION AUTOENCODER", layout="wide")
 
 # Title
-st.markdown("<h1>Convolutional Autoencoder</h1>", unsafe_allow_html=True)
+st.markdown("<h1>SOFTWARE ENGINEERING (IT303) COURSE PROJECT <br> TITLE: RGB DIMENSIONALITY REDUCTION USING CONVOLUTION AUTOENCODER</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align:center; color:#555;'>Upload an image to see original, resized input, and model output!</p>",
-    unsafe_allow_html=True
+    "<p style='text-align:center; color:#ffffff; font-size: 1.5rem'>Aditi Pandey - 231IT003<br> Prathyanga S - 231IT054</p>",
+    unsafe_allow_html=True    
 )
 st.markdown("---")
 
