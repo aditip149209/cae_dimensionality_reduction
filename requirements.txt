@@ -4,3 +4,8 @@ matplotlib
 numpy
 scikit-image
 huggingface_hub
+pandas 
+keras
+Pillow
+datasets
+
