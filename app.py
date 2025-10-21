@@ -9,24 +9,15 @@ user authentication, and user-specific data can be linked via a MySQL database.
 
 import io
 from contextlib import contextmanager
-
 import mysql.connector
 import requests
 import streamlit as st
+from models.model import compute_encoded_image
 from authlib.integrations.requests_client import OAuth2Session
 from PIL import Image
 
-# Assuming your model function is in models/model.py
-# from models.model import compute_encoded_image
-# For demonstration, we'll use a placeholder function.
-def compute_encoded_image(image: Image.Image) -> "numpy.ndarray":
-    """Placeholder for the actual model computation."""
-    import numpy as np
-    # This simulates a model converting the image to grayscale as an example
-    return np.array(image.convert("L"))
 
 
-# --- CONSTANTS AND CONFIGURATION ---
 PAGE_TITLE = (
     "RGB Dimensionality Reduction using Convolutional Autoencoder"
 )
