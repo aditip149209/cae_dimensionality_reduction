@@ -1,12 +1,3 @@
-"""
-Streamlit App for RGB Dimensionality Reduction using a Convolutional Autoencoder.
-
-This application allows users to upload an image, which is then processed by a
-pre-trained autoencoder model. The original, resized, and model-reconstructed
-images are displayed. The entire application is secured using Auth0 for
-user authentication, and user-specific data can be linked via a MySQL database.
-"""
-
 import io
 from contextlib import contextmanager
 import mysql.connector
@@ -137,7 +128,6 @@ def show_main_application():
     # Sidebar for user info and logout
     st.sidebar.header(f"Welcome, {user.get('name', user.get('email'))}!")
     st.sidebar.image(user.get('picture'), width=100)
-    logout_url = f"{REDIRECT_URI}?client_id={CLIENT_ID}&returnTo={REDIRECT_URI}"
     if st.sidebar.button("Logout"):
         st.session_state.user_info = None
         st.rerun()
