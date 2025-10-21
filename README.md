@@ -67,6 +67,23 @@ Notes:
 - `requirements.txt` includes the packages used by the Streamlit demo and notebook (TensorFlow, Streamlit, numpy, matplotlib, scikit-image, huggingface_hub).
 - If you use a GPU-enabled TensorFlow, install the matching `tensorflow` package version with GPU support.
 
+3. Configure secrets
+
+   The Streamlit app may use secrets for deployment or for connecting to services. Create a file at `.streamlit/secrets.toml` and add the necessary credentials. For example:
+
+   ```toml
+   # .streamlit/secrets.toml
+   AUTH0_CLIENT_ID = "NzuUttbANlmaoooR"
+   AUTH0_CLIENT_SECRET = "a7tXGMLGFlmaoooooBERQhTdYTtbDR3f11hnO8vsqWpOCVyS"
+   AUTH0_DOMAIN = "dev-odn7u8lmaooooo.auth0.com" 
+
+    # Your MySQL secrets
+    DB_HOST = "lol"
+    DB_USER = "lol"
+    DB_PASS = "lol"
+    DB_NAME = "cae_lol" 
+   ```
+
 ## Run the Streamlit app (demo)
 
 The simplest way to see the model working is to run the Streamlit UI.
