@@ -1,13 +1,14 @@
 import io
-from contextlib import contextmanager
-import mysql.connector
 import requests
+import base64
 import streamlit as st
 from models.model import compute_encoded_image
 from authlib.integrations.requests_client import OAuth2Session
 from PIL import Image
-
-
+import mysql.connector
+from db.db_config import get_db_connection
+from db.db_funcs import get_image_history, get_image_history_list, add_image_to_history, create_user
+from auth.auth import get_authorization_url, fetch_user_info, fetch_token
 
 PAGE_TITLE = (
     "RGB Dimensionality Reduction using Convolutional Autoencoder"
@@ -51,65 +52,18 @@ def load_html(file_name: str):
     except FileNotFoundError:
         pass  # Silently fail if footer is not found
 
+# --- HISTORY CALLBACKS (The "Asynchronous" Part) ---
+def load_history_image(image_id):
+    """
+    Callback function. Fetches a specific image from the DB
+    and stores it in the session state.
+    """
+    record = get_image_history(image_id)
+    st.session_state.selected_history_item = record
 
-@contextmanager
-def get_db_connection():
-    """Manages the MySQL connection, ensuring it's properly closed."""
-    try:
-        conn = mysql.connector.connect(
-            host=st.secrets["DB_HOST"],
-            user=st.secrets["DB_USER"],
-            password=st.secrets["DB_PASS"],
-            database=st.secrets["DB_NAME"],
-        )
-        yield conn
-    except mysql.connector.Error as err:
-        st.error(f"Database Error: {err}")
-        yield None
-    finally:
-        if "conn" in locals() and conn.is_connected():
-            conn.close()
-
-
-# --- AUTHENTICATION LOGIC ---
-def get_oauth_session():
-    """Initializes and returns an OAuth2 session."""
-    return OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
-
-
-def get_authorization_url() -> str:
-    """Generates the Auth0 login URL."""
-    session = get_oauth_session()
-    scope = "openid profile email"
-    audience = f"https://{DOMAIN}/userinfo"
-    auth_url, state = session.create_authorization_url(
-        AUTHORIZATION_ENDPOINT, audience=audience, scope=scope, prompt='login'
-    )
-    st.session_state.oauth_state = state
-    return auth_url
-
-
-def fetch_token(code: str) -> dict or None:
-    """Exchanges the authorization code for an access token."""
-    session = get_oauth_session()
-    try:
-        return session.fetch_token(TOKEN_ENDPOINT, code=code)
-    except Exception as e:
-        st.error(f"Error fetching token: {e}")
-        return None
-
-
-def fetch_user_info(token: dict) -> dict or None:
-    """Uses the access token to get user information."""
-    session = get_oauth_session()
-    session.token = token
-    try:
-        response = session.get(USERINFO_ENDPOINT)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        st.error(f"Error fetching user info: {e}")
-        return None
+def show_upload_page():
+    """Callback to clear the history view and show the uploader."""
+    st.session_state.selected_history_item = None
 
 
 # --- UI COMPONENTS ---
@@ -121,8 +75,11 @@ def show_login_page():
     st.link_button("Login with Auth0", auth_url, use_container_width=True)
 
 
-def show_main_application():
+def show_main_application(user):
     """Displays the main image processing application."""
+    user_id = user['sub']
+
+    create_user(st.session_state.user_info)
     user = st.session_state.user_info
 
     # Sidebar for user info and logout
@@ -131,7 +88,33 @@ def show_main_application():
     if st.sidebar.button("Logout"):
         st.session_state.user_info = None
         st.rerun()
+    
+    st.sidebar.divider()
+    st.sidebar.subheader("Your Upload History")
 
+    
+
+    #we will write the logic for the history here. this will require fetching the result of db queries and storing them in an array and looping over them 
+    history_items = get_image_history_list(user_id)
+    
+    if not history_items:
+        st.sidebar.caption("No uploads found.")
+    else:
+        # Create a button for each history item
+        for item in history_items:
+            date_str = item['created_at'].strftime("%Y-%m-%d %H:%M")
+            item_label = f"{item['original_filename']} (on {date_str})"
+            
+            # --- This is the "React" part ---
+            # When clicked, the 'on_click' callback fires,
+            # fetches the data, stores it in state, and reruns.
+            st.sidebar.button(
+                item_label, 
+                key=f"history_{item['id']}", 
+                on_click=load_history_image, 
+                args=(item['id'],) # Pass the image ID to the callback
+            )
+    
     # Main page content
     st.markdown(f"<h1>{PAGE_SUBTITLE}<br>{PAGE_TITLE}</h1>", unsafe_allow_html=True)
     st.markdown(
@@ -140,24 +123,52 @@ def show_main_application():
     )
     st.markdown("---")
 
-    uploaded_file = st.file_uploader(
-        "Upload an image (JPG or PNG)", type=["jpg", "jpeg", "png"]
-    )
-
-    if uploaded_file:
-        process_and_display_image(uploaded_file)
+    if "selected_history_item" in st.session_state and st.session_state.selected_history_item:
+        # --- VIEW HISTORY ITEM PAGE ---
+        st.subheader("Viewing from Your History")
+        
+        record = st.session_state.selected_history_item
+        st.markdown(f"**Original Filename:** `{record['original_filename']}`")
+        image_bytes = base64.b64decode(record['reconstructed_image_data'])
+        
+        # The 'reconstructed_image_data' is the Base64 data URL
+        st.image(image_bytes, caption="Reconstructed Image")
+        
+        if st.button("Upload a New Image"):
+            # This callback clears the state and reruns
+            show_upload_page()
+            st.rerun()
+            
     else:
-        st.info("Please upload an image to see the results.")
-
+        # --- UPLOAD PAGE (Default) ---
+        uploaded_file = st.file_uploader("Upload an image (JPG or PNG)", type=["jpg", "jpeg", "png"], key=f"uploader_{st.session_state.uploader_key}")
+        
+        if uploaded_file:
+            process_and_display_image(uploaded_file, user_id)
+        else:
+            st.info("Please upload an image to see previews.")
     load_html("footer.html")
 
 
-def process_and_display_image(uploaded_file):
-    """Handles the image processing and displays the results."""
+
+def process_and_display_image(uploaded_file, user_id):
+    original_filename = uploaded_file.name
+
     original = Image.open(uploaded_file).convert("RGB")
     resized = original.resize((64, 64))
+
     output_array = compute_encoded_image(resized)
+
     model_output = Image.fromarray(output_array)
+
+    buffered = io.BytesIO()
+    model_output.save(buffered, format="PNG")
+    image_bytes = buffered.getvalue()
+
+    encoded_img = base64.b64encode(image_bytes).decode('utf-8')
+
+    add_image_to_history(user_id, original_filename, encoded_img)
+
 
     st.subheader("Image Comparison")
     col1, col2, col3 = st.columns(3)
@@ -180,6 +191,10 @@ def process_and_display_image(uploaded_file):
             file_name="output_image.png",
             mime="image/png",
         )
+    st.session_state.history_needs_refresh = True
+    st.session_state.uploader_key += 1
+
+
 
 
 def main():
@@ -189,6 +204,8 @@ def main():
 
     if "user_info" not in st.session_state:
         st.session_state.user_info = None
+    if "uploader_key" not in st.session_state:
+        st.session_state.uploader_key = 0
 
     query_params = st.query_params
     if "code" in query_params and st.session_state.user_info is None:
@@ -202,7 +219,7 @@ def main():
                 st.rerun()
 
     if st.session_state.user_info:
-        show_main_application()
+        show_main_application(st.session_state.user_info)
     else:
         show_login_page()
 
