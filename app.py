@@ -9,6 +9,7 @@ import mysql.connector
 from db.db_config import get_db_connection
 from db.db_funcs import get_image_history, get_image_history_list, add_image_to_history, create_user
 from auth.auth import get_authorization_url, fetch_user_info, fetch_token
+import os
 
 PAGE_TITLE = (
     "RGB Dimensionality Reduction using Convolutional Autoencoder"
@@ -18,9 +19,9 @@ AUTHORS = "Aditi Pandey - 231IT003<br>Prathyanga S - 231IT054"
 
 # Auth0 Configuration - Fetched from Streamlit Secrets
 try:
-    CLIENT_ID = st.secrets["AUTH0_CLIENT_ID"]
-    CLIENT_SECRET = st.secrets["AUTH0_CLIENT_SECRET"]
-    DOMAIN = st.secrets["AUTH0_DOMAIN"]
+    CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID") or st.secrets["AUTH0_CLIENT_ID"]
+    CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET") or st.secrets["AUTH0_CLIENT_SECRET"]
+    DOMAIN = os.environ.get("AUTH0_DOMAIN") or st.secrets["AUTH0_DOMAIN"]
     REDIRECT_URI = "http://localhost:8501"
 except KeyError:
     st.error(

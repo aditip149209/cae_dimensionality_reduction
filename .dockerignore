@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+cae_env/
+venv/
+.venv/
+
+# Other
+.DS_Store
+.streamlit
+.streamlit/

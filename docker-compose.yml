@@ -1,0 +1,50 @@
+services:
+  # 1. The Streamlit App Service
+  app:
+    build: .
+    container_name: streamlit-app
+    ports:
+      - "8501:8501"
+    environment:
+      # These variables are read by your app
+      - DB_HOST=db
+      - DB_USER=aditi
+      - DB_PASSWORD=root
+      - DB_NAME=cae_lol  # <-- I updated this to your DB name
+
+      - AUTH0_CLIENT_ID="NzuUttbANwuuHPyjynFLLHJPAZzOXxER"
+      - AUTH0_CLIENT_SECRET="a7tXGMLGFuUbdEcMDPUjdxH1mU8CzRZaIBERQhTdYTtbDR3f11hnO8vsqWpOCVyS"
+      - AUTH0_DOMAIN="dev-odn7u8m3pl81gf6o.us.auth0.com"
+    networks:
+      - my-network
+    depends_on:
+      - db
+
+  # 2. The MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      # These variables create the database and user inside the container
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cae_lol  # <-- I updated this to your DB name
+      MYSQL_USER: aditi
+      MYSQL_PASSWORD: root
+    volumes:
+      # This mounts your init script to be run on first startup
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      # This saves your data to a local "db-data" volume
+      - db-data:/var/lib/mysql
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
+

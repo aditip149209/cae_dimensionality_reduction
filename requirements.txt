@@ -8,4 +8,5 @@ pandas
 keras
 Pillow
 datasets
-
+authlib
+mysql-connector-python

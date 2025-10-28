@@ -2,19 +2,27 @@ import streamlit as st
 import io
 import requests
 from authlib.integrations.requests_client import OAuth2Session
+import os
 
 
-try:
-    CLIENT_ID = st.secrets["AUTH0_CLIENT_ID"]
-    CLIENT_SECRET = st.secrets["AUTH0_CLIENT_SECRET"]
-    DOMAIN = st.secrets["AUTH0_DOMAIN"]
-    REDIRECT_URI = "http://localhost:8501"
-except KeyError:
+# --- Auth0 Configuration (Dual-Mode) ---
+CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID") or st.secrets.get("AUTH0_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET") or st.secrets.get("AUTH0_CLIENT_SECRET")
+DOMAIN = os.environ.get("AUTH0_DOMAIN") or st.secrets.get("AUTH0_DOMAIN")
+
+# This also needs to be flexible.
+# For local/docker, it's localhost. For AWS, it will be your public URL.
+REDIRECT_URI = os.environ.get("REDIRECT_URI") or "http://localhost:8501"
+
+# --- Validation Check ---
+# Stops the app if secrets are missing from *both* sources
+if not all([CLIENT_ID, CLIENT_SECRET, DOMAIN, REDIRECT_URI]):
     st.error(
-        "Auth0 secrets not found. Please add them to .streamlit/secrets.toml"
+        "Auth0 secrets not found. Please add them to .streamlit/secrets.toml or environment variables."
     )
     st.stop()
 
+# --- Endpoints (calculated from the config) ---
 AUTHORIZATION_ENDPOINT = f"https://{DOMAIN}/authorize"
 TOKEN_ENDPOINT = f"https://{DOMAIN}/oauth/token"
 USERINFO_ENDPOINT = f"https://{DOMAIN}/userinfo"
