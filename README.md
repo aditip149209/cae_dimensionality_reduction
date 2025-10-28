@@ -67,22 +67,105 @@ Notes:
 - `requirements.txt` includes the packages used by the Streamlit demo and notebook (TensorFlow, Streamlit, numpy, matplotlib, scikit-image, huggingface_hub).
 - If you use a GPU-enabled TensorFlow, install the matching `tensorflow` package version with GPU support.
 
-3. Configure secrets
+3. Configure secrets and environment
 
-   The Streamlit app may use secrets for deployment or for connecting to services. Create a file at `.streamlit/secrets.toml` and add the necessary credentials. For example:
+    The application requires a few secrets and environment variables for authentication and the database. There are two supported ways to provide them:
 
-   ```toml
-   # .streamlit/secrets.toml
-   AUTH0_CLIENT_ID = "NzuUttbANlmaoooR"
-   AUTH0_CLIENT_SECRET = "a7tXGMLGFlmaoooooBERQhTdYTtbDR3f11hnO8vsqWpOCVyS"
-   AUTH0_DOMAIN = "dev-odn7u8lmaooooo.auth0.com" 
+    - Preferred (container / CI friendly): provide them as environment variables (recommended for Docker and production).
+    - Local development: create a `.streamlit/secrets.toml` file with the values.
 
-    # Your MySQL secrets
-    DB_HOST = "lol"
-    DB_USER = "lol"
-    DB_PASS = "lol"
-    DB_NAME = "cae_lol" 
-   ```
+    Example (recommended) — set environment variables locally or via `docker-compose`:
+
+    ```bash
+    export AUTH0_CLIENT_ID="<your-auth0-client-id>"
+    export AUTH0_CLIENT_SECRET="<your-auth0-client-secret>"
+    export AUTH0_DOMAIN="<your-auth0-domain>"            # e.g. dev-xxxxxx.us.auth0.com
+
+    export DB_HOST=localhost
+    export DB_USER=aditi
+    export DB_PASS=root
+    export DB_NAME=cae_lol
+    ```
+
+    Example (local `.streamlit/secrets.toml`) — create `.streamlit/secrets.toml` in the project root:
+
+    ```toml
+    # .streamlit/secrets.toml
+    AUTH0_CLIENT_ID = "your-client-id"
+    AUTH0_CLIENT_SECRET = "your-client-secret"
+    AUTH0_DOMAIN = "dev-xxxxxx.us.auth0.com"
+
+    DB_HOST = "host.docker.internal"
+    DB_USER = "aditi"
+    DB_PASS = "root"
+    DB_NAME = "cae_lol"
+    ```
+
+    Important notes:
+    - Do NOT check `secrets.toml` into version control. It contains sensitive credentials.
+    - The app code prefers environment variables first, then falls back to Streamlit secrets. This makes running in Docker or CI more predictable.
+
+    Auth0 configuration (quick guide):
+    1. Go to https://manage.auth0.com and create a new Application (Regular Web Application).
+    2. In the Application settings set the following:
+         - Allowed Callback URLs: `http://localhost:8501`
+         - Allowed Logout URLs: `http://localhost:8501`
+         - Allowed Web Origins: `http://localhost:8501`
+    3. Copy the **Client ID**, **Client Secret**, and **Domain** into your environment variables or `.streamlit/secrets.toml`.
+
+    Database initialization:
+    - The repository contains `init.sql` which creates the required schema (users, user_images). If you use the included `docker-compose.yml` the SQL will be executed automatically by the MySQL container on first startup.
+    - If you run MySQL yourself, run:
+
+       ```bash
+       mysql -u root -p < init.sql
+       ```
+
+    Data stored by the app:
+    - Users are stored in the `users` table (`uid`, `username`). `uid` is the Auth0 `sub` value.
+    - Uploaded / reconstructed images are stored in `user_images` with columns: `id`, `uid`, `original_filename`, `reconstructed_image_data` (Base64), `created_at`.
+
+    The app saves reconstructed images (PNG) as base64 text in the database; the history sidebar fetches the list from `user_images` and displays past uploads for the logged-in user.
+
+## Run with Docker (recommended)
+
+This project includes a `docker-compose.yml` that runs both the Streamlit app and a MySQL database. The `docker-compose.yml` is already configured with sensible defaults (database name `cae_lol`, user `aditi`, password `root`).
+
+1. Build and start containers:
+
+```bash
+docker compose up --build
+```
+
+2. The Streamlit app will be available at `http://localhost:8501`.
+
+Notes about secrets and Docker:
+- For security you should NOT embed production secrets into `docker-compose.yml`. Instead, provide them via a host `.env` file or your CI/CD secret store. Example `docker-compose` environment snippet:
+
+```yaml
+services:
+   app:
+      environment:
+         - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+         - AUTH0_CLIENT_SECRET=${AUTH0_CLIENT_SECRET}
+         - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+         - DB_HOST=db
+         - DB_USER=aditi
+         - DB_PASS=root
+         - DB_NAME=cae_lol
+```
+
+- If you prefer using a `.streamlit/secrets.toml`, ensure it is mounted into the container at `/app/.streamlit/secrets.toml` (or copy it into the image). Example docker-compose volume mount:
+
+```yaml
+      volumes:
+         - ./ .streamlit/secrets.toml:/app/.streamlit/secrets.toml:ro
+```
+
+Troubleshooting common secrets/auth issues:
+- Streamlit will raise a `StreamlitSecretNotFoundError` if no secrets file is present and you attempt to access `st.secrets[...]`. The app prefers environment variables first; if you rely on `.streamlit/secrets.toml` make sure the file exists in the container.
+- If the Auth0 domain resolves with percent-encoded quotes (e.g. contains `%22`), that means extra quotes were embedded in the value. Use raw values (no surrounding extra quotes) and prefer environment variables. You can debug the value by printing it with `!r` in Python to reveal stray quotes.
+
 
 ## Run the Streamlit app (demo)
 

@@ -6,9 +6,9 @@ import os
 
 
 # --- Auth0 Configuration (Dual-Mode) ---
-CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID") or st.secrets.get("AUTH0_CLIENT_ID")
-CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET") or st.secrets.get("AUTH0_CLIENT_SECRET")
-DOMAIN = os.environ.get("AUTH0_DOMAIN") or st.secrets.get("AUTH0_DOMAIN")
+CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID") or st.secrets["AUTH0_CLIENT_ID"]
+CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET") or st.secrets["AUTH0_CLIENT_SECRET"]
+DOMAIN = os.environ.get("AUTH0_DOMAIN") or st.secrets["AUTH0_DOMAIN"]
 
 # This also needs to be flexible.
 # For local/docker, it's localhost. For AWS, it will be your public URL.

@@ -19,9 +19,9 @@ AUTHORS = "Aditi Pandey - 231IT003<br>Prathyanga S - 231IT054"
 
 # Auth0 Configuration - Fetched from Streamlit Secrets
 try:
-    CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID") or st.secrets["AUTH0_CLIENT_ID"]
-    CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET") or st.secrets["AUTH0_CLIENT_SECRET"]
-    DOMAIN = os.environ.get("AUTH0_DOMAIN") or st.secrets["AUTH0_DOMAIN"]
+    CLIENT_ID = (os.environ.get("AUTH0_CLIENT_ID") or st.secrets["AUTH0_CLIENT_ID"]).strip('"').strip("'")
+    CLIENT_SECRET = (os.environ.get("AUTH0_CLIENT_SECRET") or st.secrets["AUTH0_CLIENT_SECRET"]).strip('"').strip("'")
+    DOMAIN = (os.environ.get("AUTH0_DOMAIN") or st.secrets["AUTH0_DOMAIN"]).strip('"').strip("'")
     REDIRECT_URI = "http://localhost:8501"
 except KeyError:
     st.error(

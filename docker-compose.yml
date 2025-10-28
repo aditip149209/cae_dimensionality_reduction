@@ -9,12 +9,12 @@ services:
       # These variables are read by your app
       - DB_HOST=db
       - DB_USER=aditi
-      - DB_PASSWORD=root
+      - DB_PASS=root
       - DB_NAME=cae_lol  # <-- I updated this to your DB name
 
-      - AUTH0_CLIENT_ID="NzuUttbANwuuHPyjynFLLHJPAZzOXxER"
-      - AUTH0_CLIENT_SECRET="a7tXGMLGFuUbdEcMDPUjdxH1mU8CzRZaIBERQhTdYTtbDR3f11hnO8vsqWpOCVyS"
-      - AUTH0_DOMAIN="dev-odn7u8m3pl81gf6o.us.auth0.com"
+      - AUTH0_CLIENT_ID=NzuUttbANwuuHPyjynFLLHJPAZzOXxER
+      - AUTH0_CLIENT_SECRET=a7tXGMLGFuUbdEcMDPUjdxH1mU8CzRZaIBERQhTdYTtbDR3f11hnO8vsqWpOCVyS
+      - AUTH0_DOMAIN=dev-odn7u8m3pl81gf6o.us.auth0.com
     networks:
       - my-network
     depends_on:
